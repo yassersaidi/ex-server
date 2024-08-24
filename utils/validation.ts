@@ -29,7 +29,7 @@ export const checkRegisterSchema = checkSchema({
         }
     },
     username: {
-        errorMessage:"Username is required",
+        errorMessage: "Username is required",
         isString: true,
         isLength: {
             errorMessage: "Username should be at least 6 chars",
@@ -37,9 +37,9 @@ export const checkRegisterSchema = checkSchema({
                 min: 6,
             }
         },
-        matches:{
-            options:/[a-zA-Z]/,
-            errorMessage:"Name must contain at least one alphabetical character"
+        matches: {
+            options: /[a-zA-Z]/,
+            errorMessage: "Name must contain at least one alphabetical character"
         }
     }
 })
@@ -56,14 +56,16 @@ export const checkVerificationCodeSchema = checkSchema({
         errorMessage: "Invalid Email",
         isEmail: true,
     },
-    code:{
-        errorMessage:"Invalid Code",
-        isNumeric:true,
-        isLength:{
-            options:{
-                max:6,
-                min:6
+    code: {
+        errorMessage: "Invalid Code",
+        isLength: {
+            options: {
+                max: 6,
+                min: 6
             }
+        },
+        matches: {
+            options: /^\d{6}$/
         }
     }
 })
@@ -81,14 +83,16 @@ export const checkResetPasswordSchema = checkSchema({
             }
         }
     },
-    code:{
-        errorMessage:"Invalid Code",
-        isNumeric:true,
-        isLength:{
-            options:{
-                max:6,
-                min:6
+    code: {
+        errorMessage: "Invalid Code",
+        isLength: {
+            options: {
+                max: 6,
+                min: 6
             }
+        },
+        matches: {
+            options: /^\d{6}$/
         }
     }
 })

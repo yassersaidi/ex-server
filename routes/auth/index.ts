@@ -17,20 +17,17 @@ import { generateNumericCode } from '../../utils/generateCodes';
 
 const prisma = new PrismaClient()
 
-router.use(authLimit)
+router.use(authLimit) // comment this line when running unit tests
 
 // Login Route
 router.post('/login', checkLoginSchema, async (req: Request, res: Response) => {
     //generateReqLog("../logs/auth.json", "Login", req)
-    console.log(req.headers)
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(422).json({ errors: errors.array() });
     }
     const { email, password }: LoginType = req.body
-    if (!email || !password) {
-        return res.status(406).json({ error: 'Login data is missing' })
-    }
+
     try {
         const user = await prisma.user.findUnique({
             where: { email }
@@ -89,9 +86,6 @@ router.post('/register', checkRegisterSchema, async (req: Request, res: Response
         return res.status(422).json({ errors: errors.array() });
     }
     const { email, username, password }: RegisterType = req.body
-    if (!email || !password || !username) {
-        return res.status(406).json({ error: 'Register data is missing' })
-    }
     try {
         const hashedPassword = await bcrypt.hash(password, parseInt(process.env.PASSWORD_SALT as string))
         const user = await prisma.user.create({
@@ -106,8 +100,6 @@ router.post('/register', checkRegisterSchema, async (req: Request, res: Response
     } catch (error) {
         if (error instanceof PrismaClientKnownRequestError && error.code === "P2002") {
             const targetField = error.meta?.target;
-
-            console.error(`Unique constraint failed on the fields: ${targetField}`);
             return res.status(409).json({ error: `The provided ${targetField} already exists` });
         }
         res.status(500).json({ error: 'An error occurred during registration' });
@@ -116,15 +108,12 @@ router.post('/register', checkRegisterSchema, async (req: Request, res: Response
 })
 
 // Send Verification code Route
-router.post('/send-verify-code', checkUserSchema, async (req: Request, res: Response) => {
+router.post('/verify-email', checkUserSchema, async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(422).json({ errors: errors.array() });
     }
     const { email }: LoginType = req.body
-    if (!email) {
-        return res.status(406).json({ error: 'Email is missing' })
-    }
 
     try {
         const user = await prisma.user.findUnique({
@@ -134,16 +123,14 @@ router.post('/send-verify-code', checkUserSchema, async (req: Request, res: Resp
             return res.status(404).json({ error: "Invalid credentials" })
         }
         if (user?.verified) {
-            return res.status(204).json({ message: "User already verified !" })
+            return res.status(204).send()
         }
-
         const existingCode = await prisma.verificationCode.findFirst({
             where: {
                 userId: user.id,
-                expiresAt: { gt: new Date() } 
+                expiresAt: { gt: new Date() }
             }
         });
-
         if (existingCode) {
             return res.status(200).json({ message: 'A verification code has already been sent. Please check your email.' });
         }
@@ -181,18 +168,19 @@ router.post('/verify-code', checkVerificationCodeSchema, async (req: Request, re
 
     const { email, code }: { email: string; code: string } = req.body;
 
-    if (!email || !code) {
-        return res.status(406).json({ error: 'Email or verification code is missing' });
-    }
-
     try {
         const user = await prisma.user.findUnique({
             where: { email }
         });
 
         if (!user) {
-            return res.status(404).json({ error: "User not found" });
+            return res.status(404).json({ error: "Invalid credentials" });
         }
+
+        if (user?.verified) {
+            return res.status(204).send()
+        }
+
 
         const userVerificationCode = await prisma.verificationCode.findFirst({
             where: {
@@ -238,7 +226,7 @@ router.post('/forgot-password', checkUserSchema, async (req: Request, res: Respo
         });
 
         if (!user) {
-            return res.status(404).json({ error: "User not found" });
+            return res.status(404).json({ error: "Invalid credentials" });
         }
 
         const existingResetCode = await prisma.verificationCode.findFirst({
@@ -252,13 +240,13 @@ router.post('/forgot-password', checkUserSchema, async (req: Request, res: Respo
             return res.status(200).json({ message: "A reset code has already been sent. Please check your email." });
         }
 
-        const resetCode = generateNumericCode(6); 
+        const resetCode = generateNumericCode(6);
 
         await prisma.verificationCode.create({
             data: {
                 userId: user.id,
                 code: resetCode,
-                expiresAt: new Date(Date.now() + 5 * 60 * 1000) 
+                expiresAt: new Date(Date.now() + 5 * 60 * 1000)
             }
         });
 
@@ -291,7 +279,7 @@ router.post('/reset-password', checkResetPasswordSchema, async (req: Request, re
         });
 
         if (!user) {
-            return res.status(404).json({ error: "User not found" });
+            return res.status(404).json({ error: "Invalid credentials" });
         }
 
         const resetCode = await prisma.verificationCode.findFirst({

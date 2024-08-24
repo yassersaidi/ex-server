@@ -9,12 +9,8 @@ const timeLog = (req:Request, res:Response, next:NextFunction) => {
 }
 router.use(timeLog)
 
-router.get('/login', (req:Request, res:Response) => {
-    res.send('Login')
-})
-
-router.get('/register', (req:Request, res:Response) => {
-    res.send('Register')
+router.get('/users', (req:Request, res:Response) => {
+    res.send('users')
 })
 
 module.exports = router

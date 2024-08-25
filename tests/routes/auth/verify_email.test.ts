@@ -6,7 +6,7 @@ import { PrismaClient } from '@prisma/client';
 const bcrypt = require('bcryptjs');
 import { v4 as uuidv4 } from 'uuid';
 
-const auth = require("../../routes/auth")
+const auth = require("../../../routes/auth")
 
 const app = express();
 app.use(cors());

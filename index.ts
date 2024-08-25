@@ -1,11 +1,12 @@
 import { Application } from "express"
 
 var cookieParser = require('cookie-parser')
-
+import cors from 'cors';
 
 const express = require('express')
 const app: Application = express()
 
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser())
 

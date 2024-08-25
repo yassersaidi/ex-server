@@ -16,6 +16,15 @@ model User {
     verified         Boolean            @default(false)
     Session          Session[]
     VerificationCode VerificationCode[]
+    Admin            Admin?
+}
+
+model Admin {
+    id        String   @id @default(uuid())
+    email     String   @unique
+    userId    String   @unique
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
 }
 
 model Session {

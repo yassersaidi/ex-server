@@ -4,7 +4,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { PrismaClient } from '@prisma/client';
 const bcrypt = require('bcryptjs');
-const auth = require("../../routes/auth")
+const auth = require("../../../routes/auth")
 const app = express();
 
 app.use(cors());

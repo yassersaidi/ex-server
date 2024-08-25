@@ -9,7 +9,7 @@ import generateReqLog from '../../utils/generateReqLog';
 import { LoginType, RegisterType, ResetPasswordType } from '../../types/Auth';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { authLimit } from '../../middleware/auth';
-import { checkLoginSchema, checkRegisterSchema, checkVerificationCodeSchema, checkUserSchema, checkResetPasswordSchema } from '../../utils/validation';
+import { checkLoginSchema, checkRegisterSchema, checkVerificationCodeSchema, checkResetPasswordSchema, checkUserSchema } from '../../utils/validation';
 import { validationResult } from 'express-validator';
 import { sendResetPasswordCode, sendVerificationCode } from '../../utils/sendEmails';
 import { generateNumericCode } from '../../utils/generateCodes';
@@ -17,7 +17,7 @@ import { generateNumericCode } from '../../utils/generateCodes';
 
 const prisma = new PrismaClient()
 
-router.use(authLimit) // comment this line when running unit tests
+// router.use(authLimit) // comment this line when running unit tests
 
 // Login Route
 router.post('/login', checkLoginSchema, async (req: Request, res: Response) => {

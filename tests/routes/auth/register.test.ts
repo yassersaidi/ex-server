@@ -6,7 +6,7 @@ import { PrismaClient } from '@prisma/client';
 const bcrypt = require('bcryptjs');
 import { v4 as uuidv4 } from 'uuid';
 
-const auth = require("../../routes/auth")
+const auth = require("../../../routes/auth")
 
 const app = express();
 app.use(cors());
@@ -16,13 +16,12 @@ app.use('/auth', auth);
 const prisma = new PrismaClient();
 
 beforeAll(async () => {
-    const hashedPassword = await bcrypt.hash('testpassword', parseInt(process.env.PASSWORD_SALT as string));
     await prisma.user.create({
         data: {
-            id: 'Test1 User' + uuidv4(),
-            email: 'test1@example.com',
-            password: hashedPassword,
-            username: 'Test1 User',
+            id: 'testing1',
+            email: 'testing1@example.com',
+            password: "testing1@example.com",
+            username: 'Testing1',
         },
     });
 });
@@ -31,7 +30,7 @@ afterAll(async () => {
     await prisma.user.deleteMany({
         where: {
             email: {
-                in: ['test1@example.com', 'test2@example.com']
+                in: ['testing1@example.com','testing2@example.com']
             },
         }
     });
@@ -85,24 +84,24 @@ describe("Register User Route Tests", () => {
         expect(response.body.errors[0].msg).toBe("Username should be at least 6 chars")
     })
 
-    test("Should return: Name must contain at least one alphabetical character", async () => {
+    test("Should return: Username can only contain letters and numbers", async () => {
         const response = await request(app)
             .post('/auth/register')
             .send({
                 email: 'test1@example.com',
                 password: 'testpassword',
-                username: "4715447"
+                username: "4715,447"
             })
         expect(response.status).toBe(422)
         expect(response.body).toHaveProperty('errors')
-        expect(response.body.errors[0].msg).toBe("Name must contain at least one alphabetical character")
+        expect(response.body.errors[0].msg).toBe("Username can only contain letters and numbers")
     })
 
     test("Should return: The provided email already exists", async () => {
         const response = await request(app)
             .post('/auth/register')
             .send({
-                email: 'test1@example.com',
+                email: 'testing1@example.com',
                 password: 'testpassword',
                 username: "4715d447"
             })
@@ -115,9 +114,9 @@ describe("Register User Route Tests", () => {
         const response = await request(app)
             .post('/auth/register')
             .send({
-                email: 'test2@example.com',
+                email: 'testing2@example.com',
                 password: 'testpassword',
-                username: "Test1 User"
+                username: "Testing1"
             })
         expect(response.status).toBe(409)
         expect(response.body).toHaveProperty('error')
@@ -128,10 +127,11 @@ describe("Register User Route Tests", () => {
         const response = await request(app)
             .post('/auth/register')
             .send({
-                email: 'test2@example.com',
-                password: 'testpassword',
-                username: "Test2 User"
+                email: 'testing2@example.com',
+                password: 'testing2@example.com',
+                username: "Testing2"
             })
         expect(response.status).toBe(200)
+        expect(response.body).toContain("Testing2")
     })
 })

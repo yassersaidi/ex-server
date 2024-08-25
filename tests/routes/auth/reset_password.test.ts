@@ -5,7 +5,7 @@ import bodyParser from 'body-parser';
 import { PrismaClient } from '@prisma/client';
 const bcrypt = require('bcryptjs');
 
-const auth = require("../../routes/auth")
+const auth = require("../../../routes/auth")
 
 const app = express();
 app.use(cors());
@@ -18,23 +18,23 @@ beforeAll(async () => {
     const hashedPassword = await bcrypt.hash('testpassword', parseInt(process.env.PASSWORD_SALT as string));
     await prisma.user.createMany({
         data: [{
-            id: 'testing6',
-            email: 'testing6@example.com',
+            id: 'testing17',
+            email: 'testing17@example.com',
             password: hashedPassword,
-            username: 'Test6 User',
+            username: 'Testing17 User',
         },
         {
-            id: 'testing7',
-            email: 'testing7@example.com',
-            password: "testing7@example.com",
-            username: 'Test7 User',
+            id: 'testing18',
+            email: 'testing18@example.com',
+            password: "testing18@example.com",
+            username: 'Testing18 User',
             verified: true
         },
         {
-            id: 'testing8',
-            email: 'testing8@example.com',
-            password: "testing8@example.com",
-            username: 'Test8 User',
+            id: 'testing19',
+            email: 'testing19@example.com',
+            password: "testing19@example.com",
+            username: 'Testing19 User',
         }
         ],
     });
@@ -42,12 +42,12 @@ beforeAll(async () => {
     await prisma.verificationCode.createMany({
         data: [
             {
-                userId: "testing8",
+                userId: "testing19",
                 code: "123456",
                 expiresAt: new Date(Date.now() + 15 * 60 * 1000)
             },
             {
-                userId: "testing6",
+                userId: "testing17",
                 code: "788954",
                 expiresAt: new Date(Date.now())
             }
@@ -59,7 +59,7 @@ afterAll(async () => {
     await prisma.verificationCode.deleteMany({
         where: {
             userId: {
-                in: ["testing6", "testing7", "testing8"]
+                in: ["testing17", "testing18", "testing19"]
             }
         }
     })
@@ -67,18 +67,18 @@ afterAll(async () => {
     await prisma.user.deleteMany({
         where: {
             email: {
-                in: ["testing6@example.com", "testing7@example.com", "testing8@example.com"]
+                in: ["testing17@example.com", "testing18@example.com", "testing19@example.com"]
             }
         },
     });
     await prisma.$disconnect();
 });
 
-describe("Code Verification Route Tests", () => {
+describe("Rest Password Route Tests", () => {
 
     test("Should return: (No Email Provided) Invalid Email", async () => {
         const response = await request(app)
-            .post('/auth/verify-code')
+            .post('/auth/reset-password')
         expect(response.status).toBe(422)
         expect(response.body).toHaveProperty('errors')
         expect(response.body.errors[0].msg).toBe("Invalid Email")
@@ -86,7 +86,7 @@ describe("Code Verification Route Tests", () => {
 
     test("Should return: Invalid Email", async () => {
         const response = await request(app)
-            .post('/auth/verify-code')
+            .post('/auth/reset-password')
             .send({
                 email: "testexample.com"
             })
@@ -95,22 +95,34 @@ describe("Code Verification Route Tests", () => {
         expect(response.body.errors[0].msg).toBe("Invalid Email")
     })
 
-    test("Should return: Invalid Code", async () => {
+    test("Should return: Password should be at least 8 chars", async () => {
         const response = await request(app)
-            .post('/auth/verify-code')
+            .post('/auth/reset-password')
             .send({
-                email: "test10@example.com",
+                email: "testing20@example.com",
             })
         expect(response.status).toBe(422)
         expect(response.body).toHaveProperty('errors')
-        expect(response.body.errors[0].msg).toBe("Invalid Code")
+        expect(response.body.errors[0].msg).toBe("Password should be at least 8 chars")
+    })
+    test("Should return: Password should be at least 8 chars", async () => {
+        const response = await request(app)
+            .post('/auth/reset-password')
+            .send({
+                email: "testing20@example.com",
+                password:"784"
+            })
+        expect(response.status).toBe(422)
+        expect(response.body).toHaveProperty('errors')
+        expect(response.body.errors[0].msg).toBe("Password should be at least 8 chars")
     })
 
     test("Should return: Invalid Code", async () => {
         const response = await request(app)
-            .post('/auth/verify-code')
+            .post('/auth/reset-password')
             .send({
-                email: "test10@example.com",
+                email: "testing20@example.com",
+                password:"78451ddct",
                 code: "412"
             })
         expect(response.status).toBe(422)
@@ -120,9 +132,10 @@ describe("Code Verification Route Tests", () => {
 
     test("Should return: Invalid Code", async () => {
         const response = await request(app)
-            .post('/auth/verify-code')
+            .post('/auth/reset-password')
             .send({
-                email: "test10@example.com",
+                email: "testing20@example.com",
+                password:"78451ddct",
                 code: "4124741"
             })
         expect(response.status).toBe(422)
@@ -132,9 +145,10 @@ describe("Code Verification Route Tests", () => {
 
     test("Should return: Invalid Code", async () => {
         const response = await request(app)
-            .post('/auth/verify-code')
+            .post('/auth/reset-password')
             .send({
-                email: "test10@example.com",
+                email: "testing20@example.com",
+                password:"78451ddct",
                 code: "tgtbbfbgf"
             })
         expect(response.status).toBe(422)
@@ -144,9 +158,10 @@ describe("Code Verification Route Tests", () => {
 
     test("Should return: Invalid credentials", async () => {
         const response = await request(app)
-            .post('/auth/verify-code')
+            .post('/auth/reset-password')
             .send({
-                email: "test10@example.com",
+                email: "testing20@example.com",
+                password:"78451ddct",
                 code: "410144"
             })
         expect(response.status).toBe(404)
@@ -154,51 +169,45 @@ describe("Code Verification Route Tests", () => {
         expect(response.body.error).toBe("Invalid credentials")
     })
 
-    test("Should return: User already verified !", async () => {
-        const response = await request(app)
-            .post('/auth/verify-code')
-            .send({
-                email: "testing7@example.com",
-                code: "745123"
-            })
-        expect(response.status).toBe(204)
-    })
 
-    test("Should return: Invalid or expired verification code", async () => {
+    test("Should return: Invalid or expired reset code", async () => {
         const response = await request(app)
-            .post('/auth/verify-code')
+            .post('/auth/reset-password')
             .send({
-                email: "testing6@example.com",
+                email: "testing17@example.com",
+                password:"78451ddct",
                 code: "788954"
             })
         expect(response.status).toBe(400)
         expect(response.body).toHaveProperty('error')
-        expect(response.body.error).toBe("Invalid or expired verification code")
+        expect(response.body.error).toBe("Invalid or expired reset code")
     })
 
-    test("Should return: Invalid or expired verification code", async () => {
+    test("Should return: Invalid or expired reset code", async () => {
         const response = await request(app)
-            .post('/auth/verify-code')
+            .post('/auth/reset-password')
             .send({
-                email: "testing8@example.com",
+                email: "testing19@example.com",
+                password:"78451ddct",
                 code: "754120"
             })
         expect(response.status).toBe(400)
         expect(response.body).toHaveProperty('error')
-        expect(response.body.error).toBe("Invalid or expired verification code")
+        expect(response.body.error).toBe("Invalid or expired reset code")
 
     })
 
-    test("Should return: User successfully verified", async () => {
+    test("Should return: Password successfully reset", async () => {
         const response = await request(app)
-            .post('/auth/verify-code')
+            .post('/auth/reset-password')
             .send({
-                email: "testing8@example.com",
+                email: "testing19@example.com",
+                password:"78451ddct",
                 code: "123456"
             })
         expect(response.status).toBe(200)
         expect(response.body).toHaveProperty('message')
-        expect(response.body.message).toBe("User successfully verified")
+        expect(response.body.message).toBe("Password successfully reset")
 
     })
 

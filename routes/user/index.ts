@@ -1,22 +1,20 @@
-import express, { Express, Request, Response, Application, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+import path from 'path';
+import { checkUsernameSchema, checkSearchQuerySchema } from '../../utils/validation';
+import { validationResult } from 'express-validator';
+import { isAdmin, isAuth } from '../../middleware';
+import uploader from '../../middleware/fileUploader';
 const router = express.Router()
-import { PrismaClient } from '@prisma/client'
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-import { v4 as uuidv4 } from 'uuid';
-
-import generateReqLog from '../../utils/generateReqLog';
-import { LoginType, RegisterType, ResetPasswordType } from '../../types/Auth';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { authLimit } from '../../middleware/auth';
-import { checkLoginSchema, checkRegisterSchema, checkVerificationCodeSchema, checkResetPasswordSchema, checkUsernameSchema, checkSearchQuerySchema } from '../../utils/validation';
-import { validationResult } from 'express-validator';
-import { sendResetPasswordCode, sendVerificationCode } from '../../utils/sendEmails';
-import { generateNumericCode } from '../../utils/generateCodes';
-import { isAdmin, isAuth } from '../../middleware';
 
 
 const prisma = new PrismaClient()
+
+
+const profileUploadDir = process.env.PROFILE_PICTURE_DIR || '/uploads/profile';
+
 
 router.use(isAuth)
 
@@ -36,6 +34,7 @@ router.get('/all', async (req: Request, res: Response) => {
                 username: true,
                 createdAt: true,
                 verified: true,
+                profilePicture: true
             }
         })
 
@@ -44,6 +43,7 @@ router.get('/all', async (req: Request, res: Response) => {
         res.status(500).json({ error: "An error occurred during getting users" })
     }
 })
+
 
 router.get('/me', async (req: Request, res: Response) => {
     const errors = validationResult(req);
@@ -64,6 +64,7 @@ router.get('/me', async (req: Request, res: Response) => {
                 username: true,
                 createdAt: true,
                 verified: true,
+                profilePicture: true
             }
         });
 
@@ -99,6 +100,7 @@ router.get('/get/:username', checkUsernameSchema, async (req: Request, res: Resp
                 username: true,
                 createdAt: true,
                 verified: true,
+                profilePicture: true
             }
         });
 
@@ -136,6 +138,14 @@ router.put('/username', checkUsernameSchema, async (req: Request, res: Response)
             where: { id: user.id },
             data: {
                 username: req.body?.username
+            },
+            select: {
+                id: true,
+                email: true,
+                username: true,
+                createdAt: true,
+                verified: true,
+                profilePicture: true
             }
         });
 
@@ -144,6 +154,58 @@ router.put('/username', checkUsernameSchema, async (req: Request, res: Response)
         res.status(500).json({ error: "An error occurred during updating the user" });
     }
 });
+
+
+router.put('/update-image', async (req: Request, res: Response) => {
+
+    if (!req?.body?.userId) {
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    try {
+
+        const user = await prisma.user.findUnique({
+            where: { id: req?.body?.userId }
+        })
+
+        const upload = await uploader(profileUploadDir, 'image/', user?.username);
+
+        upload.parse(req, async (err, fields, files) => {
+            if (err) {
+                return res.status(500).json({ error: "An error occurred during file upload" });
+            }
+
+            const file = files.image?.[0];
+
+
+            if (!file) {
+                return res.status(400).json({ error: "No image uploaded" });
+            }
+
+            const imageUrl = `${profileUploadDir}/${path.basename(file.filepath)}`;
+
+            const updatedUser = await prisma.user.update({
+                where: { id: req.body.userId },
+                data: { profilePicture: imageUrl },
+                select: {
+                    id: true,
+                    email: true,
+                    username: true,
+                    createdAt: true,
+                    verified: true,
+                    profilePicture: true
+                }
+            });
+
+
+            res.json({ message: "Image updated successfully", updatedUser });
+        })
+
+    } catch (error) {
+        res.status(500).json({ error: "An error occurred during updating the image" });
+    }
+});
+
 
 router.get('/search', checkSearchQuerySchema, async (req: Request, res: Response) => {
     const errors = validationResult(req);
@@ -176,6 +238,7 @@ router.get('/search', checkSearchQuerySchema, async (req: Request, res: Response
                 email: true,
                 username: true,
                 createdAt: true,
+                profilePicture: true,
                 verified: true
             }
         });

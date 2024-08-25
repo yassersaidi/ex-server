@@ -13,6 +13,7 @@ import { checkLoginSchema, checkRegisterSchema, checkVerificationCodeSchema, che
 import { validationResult } from 'express-validator';
 import { sendResetPasswordCode, sendVerificationCode } from '../../utils/sendEmails';
 import { generateNumericCode } from '../../utils/generateCodes';
+import generateInitialsImage from '../../utils/generateImage';
 
 
 const prisma = new PrismaClient()
@@ -87,13 +88,15 @@ router.post('/register', checkRegisterSchema, async (req: Request, res: Response
     }
     const { email, username, password }: RegisterType = req.body
     try {
+        const profilePicture = await generateInitialsImage(username);
         const hashedPassword = await bcrypt.hash(password, parseInt(process.env.PASSWORD_SALT as string))
         const user = await prisma.user.create({
             data: {
                 id: username + uuidv4(),
                 email,
                 password: hashedPassword,
-                username
+                username,
+                profilePicture
             }
         })
         res.json(user?.id)

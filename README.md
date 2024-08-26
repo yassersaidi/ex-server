@@ -1,8 +1,8 @@
-# Ex-Server 
+# Ex-Server 🚀
 
 Ex-Server is a Node.js and TypeScript server application using Express.js, PostgreSQL with Prisma as an ORM, and Jest for testing. The server includes features such as user authentication, input validation, email verification, and rate limiting.
 
-## Table of Contents
+## Table of Contents 📚
 
 - [Installation](#installation)
 - [Setup](#setup)
@@ -10,7 +10,7 @@ Ex-Server is a Node.js and TypeScript server application using Express.js, Postg
 - [Testing](#testing)
 - [Docker](#docker)
 
-## Installation
+## Installation 🛠️
 
 1. Clone the repository:
 
@@ -25,7 +25,7 @@ Ex-Server is a Node.js and TypeScript server application using Express.js, Postg
 Copy code
 npm install
 ```
-## Setup:
+## Setup ⚙️
  1. Create a .env file in the root directory of the project and add the required environment variables:(check [.env.example](https://github.com/yassersaidi/ex-server/blob/main/.env.example))
     
 
@@ -38,16 +38,16 @@ npx prisma migrate dev
 ```bash
 npx prisma generate
 ```
-## Usage:
+## Usage 🚀
 Start the development server:
 ```bash
 npm run dev
 ```
 The server will be running at http://localhost:3001.
 
-## Available Routes
+## Available Routes 📍
 
-### Authentication Routes
+### Authentication Routes 🔐
 
 | Method | Endpoint             | Request Body                                                                                              | Response                                                      |
 |--------|----------------------|-----------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
@@ -61,7 +61,7 @@ The server will be running at http://localhost:3001.
 | POST   | /auth/logout         | (No request body; token is retrieved from cookies)                                                       | `{ "message": "Logged out successfully." }`                 |
 
 
-### User Routes
+### User Routes 👤
 
 | Method | Endpoint            | Request Body                                                                                   | Response                                                        |
 |--------|---------------------|-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
@@ -72,18 +72,18 @@ The server will be running at http://localhost:3001.
 | PUT    | /user/update-image  | `{ "userId": "userId" }` (Image uploaded via form-data)                                        | `{ "message": "Image updated successfully", "updatedUser": { "id": "userId", "email": "user@example.com", "username": "username", "createdAt": "2024-01-01T00:00:00Z", "verified": true, "profilePicture": "url" } }` |
 | GET    | /user/search        | `{ "query": "searchTerm" }`                                                                    | `[ { "id": "userId", "email": "user@example.com", "username": "username", "createdAt": "2024-01-01T00:00:00Z", "profilePicture": "url", "verified": true }, ... ]` |
 | DELETE | /user/              | `{ "userId": "userId" }`                                                                       | `{ "count": 1 }`                                                |
-### Notes:
+### Notes 📓
 - **Request Body**: For endpoints without a request body (like `/auth/rt` and `/auth/logout`), the table indicates that the token is retrieved from cookies.
 - **Response**: Includes possible messages or data returned for each endpoint. Ensure that these match your actual API responses.
 - **Error Handling**: Error responses are generalized. Customize them based on the specifics of your application and its error handling.
 
-## Testing:
+## Testing 🧪 
 To run tests, use the following command:
 ```bash
 npm run test
 ```
 
-## Docker:
+## Docker 🐳
 To set up and run your application with Docker, just run this commande:
 ```bash
 docker-compose up --build

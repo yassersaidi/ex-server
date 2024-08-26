@@ -34,7 +34,7 @@ beforeAll(async () => {
 })
 afterAll(async () => {
     await prisma.user.deleteMany({
-        where: { email: { in: ["testing26@example.com"] } }
+        where: { email: { in: ["testing26@example.com","testing31@example.com"] } }
     })
     await prisma.$disconnect();
 });
@@ -71,6 +71,26 @@ describe("Updating Username Route Test", () => {
         expect(response.status).toBe(422)
         expect(response.body).toHaveProperty('errors')
         expect(response.body.errors[0].msg).toBe("Username can only contain letters and numbers")
+    })
+
+    test("Should return: The provided username already exists", async () => {
+        await prisma.user.create({
+            data: {
+                id: 'testing31',
+                email: 'testing31@example.com',
+                password: "testing31",
+                username: 'testing31',
+            },
+        });
+        const response = await request(app)
+            .put('/user/username')
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({
+                "username":"testing31"
+            })
+        expect(response.status).toBe(409)
+        expect(response.body).toHaveProperty('error')
+        expect(response.body.error).toBe("The provided username already exists")
     })
 
     test("Should return: Updated User", async () => {

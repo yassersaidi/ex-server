@@ -18,7 +18,7 @@ import generateInitialsImage from '../../utils/generateImage';
 
 const prisma = new PrismaClient()
 
-// router.use(authLimit) // comment this line when running unit tests
+// router.use(authLimit) // comment this line when running tests
 
 // Login Route
 router.post('/login', checkLoginSchema, async (req: Request, res: Response) => {

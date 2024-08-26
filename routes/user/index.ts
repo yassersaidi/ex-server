@@ -5,6 +5,7 @@ import { checkUsernameSchema, checkSearchQuerySchema } from '../../utils/validat
 import { validationResult } from 'express-validator';
 import { isAdmin, isAuth } from '../../middleware';
 import uploader from '../../middleware/fileUploader';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 const router = express.Router()
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -15,9 +16,10 @@ const prisma = new PrismaClient()
 
 const profileUploadDir = process.env.PROFILE_PICTURE_DIR || '/uploads/profile';
 
-
+// Middelware to check if the user is already authenticated
 router.use(isAuth)
 
+// Get all users (Only Admins can)
 router.get('/all', async (req: Request, res: Response) => {
     if (!req?.body?.userId) {
         return res.status(403).json({ error: "Unauthorized" })
@@ -44,7 +46,7 @@ router.get('/all', async (req: Request, res: Response) => {
     }
 })
 
-
+// Get the current authenticated user data
 router.get('/me', async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -78,7 +80,7 @@ router.get('/me', async (req: Request, res: Response) => {
     }
 });
 
-
+// Get a user by thier username
 router.get('/get/:username', checkUsernameSchema, async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -114,7 +116,7 @@ router.get('/get/:username', checkUsernameSchema, async (req: Request, res: Resp
     }
 });
 
-
+// Update the user username
 router.put('/username', checkUsernameSchema, async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -151,11 +153,15 @@ router.put('/username', checkUsernameSchema, async (req: Request, res: Response)
 
         res.json(updatedUser);
     } catch (error) {
-        res.status(500).json({ error: "An error occurred during updating the user" });
+        if (error instanceof PrismaClientKnownRequestError && error.code === "P2002") {
+            const targetField = error.meta?.target;
+            return res.status(409).json({ error: `The provided ${targetField} already exists` });
+        }
+        res.status(500).json({ error: 'An error occurred during registration' });
     }
 });
 
-
+// Update the user profile picture
 router.put('/update-image', async (req: Request, res: Response) => {
 
     if (!req?.body?.userId) {
@@ -206,7 +212,7 @@ router.put('/update-image', async (req: Request, res: Response) => {
     }
 });
 
-
+// Search users by username or email 
 router.get('/search', checkSearchQuerySchema, async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -250,6 +256,7 @@ router.get('/search', checkSearchQuerySchema, async (req: Request, res: Response
 
 })
 
+// Delete the current authenticated user
 router.delete('/', async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

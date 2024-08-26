@@ -1,22 +1,21 @@
-import express, { Express, Request, Response, Application, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 const router = express.Router()
-import { PrismaClient } from '@prisma/client'
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-import { v4 as uuidv4 } from 'uuid';
 
-import generateReqLog from '../../utils/generateReqLog';
 import { LoginType, RegisterType, ResetPasswordType } from '../../types/Auth';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { authLimit } from '../../middleware/auth';
 import { checkLoginSchema, checkRegisterSchema, checkVerificationCodeSchema, checkResetPasswordSchema, checkUserSchema } from '../../utils/validation';
 import { validationResult } from 'express-validator';
 import { sendResetPasswordCode, sendVerificationCode } from '../../utils/sendEmails';
 import { generateNumericCode } from '../../utils/generateCodes';
 import generateInitialsImage from '../../utils/generateImage';
 
-
 const prisma = new PrismaClient()
+
+// Middelware for rate limiting
 
 // router.use(authLimit) // comment this line when running tests
 
